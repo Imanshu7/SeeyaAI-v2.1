@@ -28,8 +28,6 @@ class SeeyaThread(QThread):
     def __init__(self):
         super().__init__()
         self.is_running = True
-        
-        # 🔥 FIX: Ye pehle True tha, isliye wo sun nahi rahi thi. Ab False hai.
         self.is_mic_muted = True
         self.greeted = False
 
@@ -43,12 +41,10 @@ class SeeyaThread(QThread):
         while self.is_running:
             self.glow_signal.emit(logic.is_speaking)
             
-            # Agar Mic Mute hai ya wo khud bol rahi hai, to mat suno
+           
             if self.is_mic_muted or logic.is_speaking:
                 self.msleep(100)
-                continue
-
-            # Listening...
+                continue
             text = logic.listen()
             if text:
                 self.chat_signal.emit("You", text)
@@ -110,9 +106,7 @@ class SeeyaDashboard(QMainWindow):
         
         self.hbox = QHBoxLayout(self.main_frame)
         self.hbox.setContentsMargins(0,0,0,0)
-        self.hbox.setSpacing(0)
-
-        # --- SIDEBAR ---
+        self.hbox.setSpacing(0)
         self.sidebar = QFrame()
         self.sidebar.setFixedWidth(200)
         self.sidebar.setStyleSheet("background-color: #161616; border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-right: 1px solid #222;")
@@ -129,7 +123,6 @@ class SeeyaDashboard(QMainWindow):
         self.btn_cmds = self.create_nav_btn("⚡ Commands", 1)
         self.sidebar_layout.addStretch()
         
-        # --- NEW: VOICE TOGGLE BUTTON (Mute Speaker Only) ---
         self.btn_voice = QPushButton("VOICE ON")
         self.btn_voice.setFixedHeight(30)
         self.btn_voice.setCursor(Qt.PointingHandCursor)
@@ -137,9 +130,7 @@ class SeeyaDashboard(QMainWindow):
         self.btn_voice.setStyleSheet("background:#7E57C2; color:white; border-radius:8px; font-weight:bold; font-size: 12px;")
         self.sidebar_layout.addWidget(self.btn_voice)
 
-        self.sidebar_layout.addSpacing(10)
-
-        # --- MIC TOGGLE BUTTON (Mute Listening) ---
+        self.sidebar_layout.addSpacing(10)
         self.btn_mic = QPushButton("MIC OFF")
         self.btn_mic.setFixedHeight(30)
         self.btn_mic.setCursor(Qt.PointingHandCursor)
@@ -158,8 +149,6 @@ class SeeyaDashboard(QMainWindow):
         self.sidebar_layout.addWidget(self.cpu_bar)
         
         self.hbox.addWidget(self.sidebar)
-
-        # --- CONTENT AREA ---
         self.content = QWidget()
         self.content_layout = QVBoxLayout(self.content)
         self.content_layout.setContentsMargins(15, 10, 15, 10)
@@ -195,7 +184,6 @@ class SeeyaDashboard(QMainWindow):
 
         self.pages = QStackedWidget()
         
-        # PAGE 1: CHAT
         self.page_chat = QWidget()
         self.chat_vbox = QVBoxLayout(self.page_chat)
         self.chat_vbox.setContentsMargins(0,0,0,0)
@@ -229,9 +217,7 @@ class SeeyaDashboard(QMainWindow):
         self.input_hbox.addWidget(self.btn_send)
         self.chat_vbox.addLayout(self.input_hbox)
         
-        self.pages.addWidget(self.page_chat)
-        
-        # PAGE 2: COMMANDS
+        self.pages.addWidget(self.page_chat)
         self.page_cmd = QWidget()
         self.cmd_layout = QVBoxLayout(self.page_cmd)
         self.browser = QTextBrowser()
@@ -352,10 +338,8 @@ class SeeyaDashboard(QMainWindow):
 
     def update_status(self, text):
         if not self.worker.is_mic_muted: self.lbl_status.setText(f"● {text.upper()}")
-
-    # --- BUTTON LOGIC ---
-    def toggle_voice_output(self):
-        # Backend Toggle for Seeya's Voice
+
+    def toggle_voice_output(self):
         is_silent = logic.toggle_voice_mute()
         if is_silent:
             self.btn_voice.setText("🔇 SILENT")
@@ -364,8 +348,7 @@ class SeeyaDashboard(QMainWindow):
             self.btn_voice.setText(" VOICE ON")
             self.btn_voice.setStyleSheet("background:#7E57C2; color:white; border-radius:8px; font-weight:bold; font-size: 12px;")
 
-    def toggle_mic_input(self):
-        # Frontend Toggle for Microphone
+    def toggle_mic_input(self):
         self.worker.is_mic_muted = not self.worker.is_mic_muted
         if self.worker.is_mic_muted:
             self.btn_mic.setText("MIC MUTED")
@@ -380,21 +363,16 @@ class SeeyaDashboard(QMainWindow):
             self.lbl_status.setStyleSheet("color:#00E676; font-weight:bold; font-size:11px;")
             self.input_box.setPlaceholderText("Speak or Type Command...")
 
-    def refresh_chat(self):
-        # 1. Purane messages saaf karo
+    def refresh_chat(self):
         while self.msg_layout.count():
             item = self.msg_layout.takeAt(0)
             if item.widget(): 
                 item.widget().deleteLater()
-        
-        # 2. "Chat Refreshed" ka message add karo
+        
         self.add_message("Seeya", "Chat Refreshed.")
         
-        # 3. ⏳ TIMER LOGIC: 1 Second (1000ms) baad last message uda do
-        # Lambda function dhoondhega ki layout mein kitne items hain aur last wale ko delete karega
         QTimer.singleShot(1000, lambda: self._remove_last_message())
 
-    # 👇 Ye naya helper function bhi add kar dena (refresh_chat ke niche)
     def _remove_last_message(self):
         count = self.msg_layout.count()
         if count > 0:
